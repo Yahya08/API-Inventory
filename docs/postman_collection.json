@@ -1,0 +1,101 @@
+{
+  "info": {
+    "name": "Inventory API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Jalankan Register lalu Login (token tersimpan otomatis ke {{token}}), kemudian endpoint Items."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "itemId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Yahya\",\n  \"email\": \"yahya@example.com\",\n  \"password\": \"password123\"\n}" }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data.token) { pm.collectionVariables.set('token', json.data.token); }"
+            ] }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"yahya@example.com\",\n  \"password\": \"password123\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Items",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "Create Item",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data.id) { pm.collectionVariables.set('itemId', json.data.id); }"
+            ] }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/items",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Kabel USB-C\",\n  \"description\": \"Panjang 1 meter\",\n  \"stock\": 10,\n  \"price\": 25000\n}" }
+          }
+        },
+        {
+          "name": "List Items (search + pagination)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/items?search=kabel&page=1&limit=10",
+              "host": ["{{baseUrl}}"], "path": ["items"],
+              "query": [
+                { "key": "search", "value": "kabel" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        { "name": "Get Item by ID", "request": { "method": "GET", "url": "{{baseUrl}}/items/{{itemId}}" } },
+        {
+          "name": "Update Item",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/items/{{itemId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Kabel USB-C 2m\",\n  \"description\": \"Panjang 2 meter\",\n  \"stock\": 8,\n  \"price\": 30000\n}" }
+          }
+        },
+        {
+          "name": "Decrease Stock (atomik)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/items/{{itemId}}/decrease-stock",
+            "body": { "mode": "raw", "raw": "{\n  \"quantity\": 1\n}" }
+          }
+        },
+        { "name": "Delete Item", "request": { "method": "DELETE", "url": "{{baseUrl}}/items/{{itemId}}" } }
+      ]
+    }
+  ]
+}
